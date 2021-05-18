@@ -1,0 +1,43 @@
+query GitHub($owner: String!, $repo: String!) {
+        repository(owner:$owner, name:$repo) {
+            name
+            pullRequests(first:100) {
+                totalCount
+                nodes {
+                    additions
+                    createdAt
+                    state
+                    mergedAt
+                    closedAt
+                    author {
+                        login
+                    }
+                    authorAssociation
+                    baseRepository{
+                      name
+                    }
+                    title
+                    bodyText
+                    files(first:100){
+                      nodes{
+												additions
+                        deletions
+                        path
+                        viewerViewedState
+                      }
+                    }
+                }
+                pageInfo {
+                    startCursor
+                    hasNextPage
+                    endCursor
+                }
+            }
+        }  
+        rateLimit {
+            limit
+            cost
+            remaining
+            resetAt
+        }
+    }

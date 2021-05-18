@@ -1,0 +1,44 @@
+query GitHub($owner: String!, $repo: String!, $branch: String!) {
+        repository(owner:$owner, name:$repo) {
+			name
+			id
+			ref(qualifiedName: $branch) {
+			  id
+			  name
+			  target {
+				... on Commit {
+				  id
+				  history(first: 100) {
+					pageInfo {
+					  hasNextPage
+					  endCursor
+					  startCursor
+					}
+					
+					nodes {
+						id
+						oid
+						messageHeadline
+						message
+						messageBody
+						pushedDate
+						changedFiles
+						authoredByCommitter
+						authoredDate
+						author {
+						  name
+						  email
+						  date
+						  user {
+							id
+						  }
+						}
+					}
+					
+				  }
+				}
+			  }
+			}
+		}
+            
+    }
