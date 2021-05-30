@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -16,9 +17,7 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -26,10 +25,8 @@ import org.springframework.stereotype.Service;
 public class BranchOp {
 
 	private static final Log LOG = LogFactory.getLog(BranchOp.class);
-	private String dir = "D:/Github/";
+	private String dir = "C:/Github/";
 	
-	@Autowired
-	private Environment env;
 
 	public List<String> getBranches(String reponame, String owner) throws IOException, GitAPIException, InterruptedException {
 
@@ -40,9 +37,10 @@ public class BranchOp {
 
 		List<String> branches = new ArrayList<String>();
 		
-		githubuser = env.getProperty("github.user");
-		githubkey = env.getProperty("github.key");
-
+		githubuser = System.getProperty("github.user");
+		githubkey = System.getProperty("github.key");
+		
+		LOG.info("El usuario es: "+githubuser);
 		CredentialsProvider cp = new UsernamePasswordCredentialsProvider(githubuser, githubkey);
 			
 		File f = new File(dir + reponame);
@@ -70,12 +68,22 @@ public class BranchOp {
 
 		git.fetch().setCredentialsProvider(cp).setRemote("origin").call();
 
-		Runtime.getRuntime().exec(
-				"cmd /c C:\\Users\\Crespo\\eclipse-workspace\\serverdevopsmetrics\\src\\main\\resources\\branches.bat "
-						+ reponame);
+		String command = "cmd /c C:\\resources\\branches.bat ";
+		
+		byte[] bytes = reponame.getBytes(StandardCharsets.UTF_8);
+		String reponameEnd =  new String(bytes, StandardCharsets.UTF_8);
+		String completecommand = command + reponameEnd;
+		LOG.info("ejecutamos commando: "+completecommand);
+		
+		Runtime.getRuntime().exec(completecommand);
+		
+		for(int i=0; i<5; i++) {
+			Thread.sleep(1000);
+			LOG.info("espera: "+i);
+		}
 
-		try (BufferedReader in = new BufferedReader(new FileReader("src/main/resources/salida-" + reponame + ".txt"))) {
-
+		LOG.info("Vamos a imprimir el archivo: C:/resources/salida-" + reponame + ".txt");
+		try (BufferedReader in = new BufferedReader(new FileReader("C:/resources/salida-" + reponame + ".txt"))) {
 			String line;
 
 			while ((line = in.readLine()) != null) {
@@ -86,10 +94,17 @@ public class BranchOp {
 				}
 			}
 
-			Thread.sleep(1000);
+			//Thread.sleep(1000);
+
+			LOG.info("imprimos las branches");
+			LOG.info("size branches: "+branches.size());
+			for(int i=0; i<branches.size(); i++) {
+				LOG.info("branch "+i+"·: "+branches.get(i));
+			}
 
 			return branches;
 		} catch (Exception err) {
+			LOG.info("No existe el archivo");
 			return Collections.emptyList();
 		}
 
@@ -109,27 +124,42 @@ public class BranchOp {
 
 		git = new Git(repo);
 
-		githubuser = env.getProperty("github.user");
-		githubkey = env.getProperty("github.key");
+		githubuser = System.getProperty("github.user");
+		githubkey = System.getProperty("github.key");
+				
+		LOG.info("El usuario para firstcommits es: "+githubuser);
 
 		CredentialsProvider cp = new UsernamePasswordCredentialsProvider(githubuser, githubkey);
 		git.fetch().setCredentialsProvider(cp).setRemote("origin").call();
 
+		LOG.info("imprimos las branches");
+		LOG.info("size branches en firstcommits: "+branches.size());
 		for (int i = 0; i < branches.size(); i++) {
 
-			Runtime.getRuntime().exec(
-					"cmd /c C:\\Users\\Crespo\\eclipse-workspace\\serverdevopsmetrics\\src\\main\\resources\\firstcommit.bat "
-							+ reponame + " " + branches.get(i));
-
+			LOG.info("vamos a ejecutar el cmd para la branch: "+branches.get(i));
 			
+			String command = "cmd /c C:\\resources\\firstcommit.bat ";
+			byte[] bytes = reponame.getBytes(StandardCharsets.UTF_8);
+			String reponEnd = new String(bytes, StandardCharsets.UTF_8);
+			bytes = branches.get(i).getBytes(StandardCharsets.UTF_8);
+			String branchEnd = new String(bytes, StandardCharsets.UTF_8);
+			
+			
+			String completecommand = command + reponEnd+ " " + branchEnd;
+			LOG.info("ejecutamos commando: "+completecommand);
+			
+			Runtime.getRuntime().exec(completecommand);
+
+			Thread.sleep(500);
 
 			try (BufferedReader in = new BufferedReader(
-					new FileReader("src/main/resources/salida-" + reponame + "-branch-" + branches.get(i) + ".txt"));) {
+					new FileReader("C:/resources/salida-" + reponame + "-branch-" + branches.get(i) + ".txt"));) {
 				String line;
 
 				if ((line = in.readLine()) == null) {
 					commits.add("empty");
 				} else {
+					LOG.info("adding commit:"+line);
 					commits.add(line);
 				}
 			} catch (Exception err) {
