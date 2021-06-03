@@ -134,38 +134,106 @@ public class BranchOp {
 
 		LOG.info("imprimos las branches");
 		LOG.info("size branches en firstcommits: "+branches.size());
-		for (int i = 0; i < branches.size(); i++) {
+		
+		LOG.info("vamos a ejecutar el cmd para la branch principal posible: master");
+		
+		String command = "cmd /c C:\\resources\\firstcommit.bat ";
+		byte[] bytes = reponame.getBytes(StandardCharsets.UTF_8);
+		String reponEnd = new String(bytes, StandardCharsets.UTF_8);
+		
+		String completecommand = command + reponEnd+ " master";
+		LOG.info("ejecutamos commando: "+completecommand);
+		
+		Runtime.getRuntime().exec(completecommand);
 
-			LOG.info("vamos a ejecutar el cmd para la branch: "+branches.get(i));
-			
-			String command = "cmd /c C:\\resources\\firstcommit.bat ";
-			byte[] bytes = reponame.getBytes(StandardCharsets.UTF_8);
-			String reponEnd = new String(bytes, StandardCharsets.UTF_8);
-			bytes = branches.get(i).getBytes(StandardCharsets.UTF_8);
-			String branchEnd = new String(bytes, StandardCharsets.UTF_8);
-			
-			
-			String completecommand = command + reponEnd+ " " + branchEnd;
-			LOG.info("ejecutamos commando: "+completecommand);
-			
-			Runtime.getRuntime().exec(completecommand);
+		Thread.sleep(500);
 
-			Thread.sleep(500);
+		boolean branchEsMaster=true;
+		
+		try (BufferedReader in = new BufferedReader(
+				new FileReader("C:/resources/salida-" + reponame + "-branch-master.txt"));) {
+			String line;
 
-			try (BufferedReader in = new BufferedReader(
-					new FileReader("C:/resources/salida-" + reponame + "-branch-" + branches.get(i) + ".txt"));) {
-				String line;
+			if ((line = in.readLine()) == null) {
+				branchEsMaster=false;
+			}
+		} catch (Exception err) {
+			return Collections.emptyList();
+		}
+		
+		
+		if(branchEsMaster) {
+			for (int i = 0; i < branches.size(); i++) {
 
-				if ((line = in.readLine()) == null) {
-					commits.add("empty");
-				} else {
-					LOG.info("adding commit:"+line);
-					commits.add(line);
+				LOG.info("vamos a ejecutar el cmd para la branch: "+branches.get(i));
+				
+				command = "cmd /c C:\\resources\\firstcommit.bat ";
+				bytes = reponame.getBytes(StandardCharsets.UTF_8);
+				reponEnd = new String(bytes, StandardCharsets.UTF_8);
+				bytes = branches.get(i).getBytes(StandardCharsets.UTF_8);
+				String branchEnd = new String(bytes, StandardCharsets.UTF_8);
+				
+				
+				completecommand = command + reponEnd+ " " + branchEnd;
+				LOG.info("ejecutamos commando: "+completecommand);
+				
+				Runtime.getRuntime().exec(completecommand);
+
+				Thread.sleep(500);
+
+				try (BufferedReader in = new BufferedReader(
+						new FileReader("C:/resources/salida-" + reponame + "-branch-" + branches.get(i) + ".txt"));) {
+					String line;
+
+					if ((line = in.readLine()) == null) {
+						commits.add("empty");
+					} else {
+						LOG.info("adding commit:"+line);
+						commits.add(line);
+					}
+				} catch (Exception err) {
+					return Collections.emptyList();
 				}
-			} catch (Exception err) {
-				return Collections.emptyList();
 			}
 		}
+		
+		else {
+			for (int i = 0; i < branches.size(); i++) {
+
+				LOG.info("vamos a ejecutar el cmd para la branch: "+branches.get(i));
+				
+				command = "cmd /c C:\\resources\\firstcommitmain.bat ";
+				bytes = reponame.getBytes(StandardCharsets.UTF_8);
+				reponEnd = new String(bytes, StandardCharsets.UTF_8);
+				bytes = branches.get(i).getBytes(StandardCharsets.UTF_8);
+				String branchEnd = new String(bytes, StandardCharsets.UTF_8);
+				
+				
+				completecommand = command + reponEnd+ " " + branchEnd;
+				LOG.info("ejecutamos commando: "+completecommand);
+				
+				Runtime.getRuntime().exec(completecommand);
+
+				Thread.sleep(500);
+
+				try (BufferedReader in = new BufferedReader(
+						new FileReader("C:/resources/salida-" + reponame + "-branch-" + branches.get(i) + ".txt"));) {
+					String line;
+
+					if ((line = in.readLine()) == null) {
+						commits.add("empty");
+					} else {
+						LOG.info("adding commit:"+line);
+						commits.add(line);
+					}
+				} catch (Exception err) {
+					return Collections.emptyList();
+				}
+			}
+		}
+		
+		
+		
 
 		return commits;
 

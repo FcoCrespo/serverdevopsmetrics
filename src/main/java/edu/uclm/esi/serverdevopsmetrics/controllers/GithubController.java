@@ -1,9 +1,11 @@
 package edu.uclm.esi.serverdevopsmetrics.controllers;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Scanner;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -29,15 +31,15 @@ import edu.uclm.esi.serverdevopsmetrics.models.BranchOp;
 		RequestMethod.DELETE }, allowedHeaders = "*")
 
 public class GithubController {
-	
+
 	private static final Log LOG = LogFactory.getLog(GithubController.class);
 
 	@Autowired
 	BranchOp branchOperations;
 
 	@GetMapping(value = "/branchesorder")
-	public String getFirstCommitByBranch(@RequestParam("reponame") final String reponame, @RequestParam("owner") final String owner)
-			throws IOException, GitAPIException, InterruptedException {
+	public String getFirstCommitByBranch(@RequestParam("reponame") final String reponame,
+			@RequestParam("owner") final String owner) throws IOException, GitAPIException, InterruptedException {
 
 		JSONArray array = new JSONArray();
 		JSONObject json;
@@ -53,18 +55,27 @@ public class GithubController {
 		return array.toString();
 
 	}
-	
+
 	@GetMapping(value = "/getTestReport")
-	public String getFirstCommitByBranch(@RequestParam("filepath") final String filename)
-			throws IOException{
+	public String getFirstCommitByBranch(@RequestParam("filepath") final String filename) throws IOException {
+
+		String[] ruta = filename.split(".json");
+		String fileroute = "C:\\files\\" + ruta[0] + "\\" + filename;
+
+		LOG.info(fileroute);
+
+		File file = new File(fileroute);
 		
-		String [] ruta = filename.split(".json");
-		String file = "C:\\Users\\Crespo\\.jenkins\\workspace\\devopsmetrics\\target\\reports\\"+ruta[0]+"\\"+filename;
-		
-		LOG.info(file);
-		
-		Path fileName = Path.of(file);
-		return Files.readString(fileName);
+		try (Scanner scan = new Scanner(file)) {
+			String fileContent="";
+			
+			while(scan.hasNextLine()) {
+				fileContent = fileContent.concat(scan.nextLine() + "\n");
+			}
+			
+			
+			return fileContent;
+		}
 
 	}
 
