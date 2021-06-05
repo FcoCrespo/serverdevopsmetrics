@@ -1,5 +1,9 @@
-C:
+cd ..
+cd ..
+cd ..
 cd Github
 cd %1
-git merge-base refs/remotes/origin/%2 master > C:\Users\Crespo\eclipse-workspace\serverdevopsmetrics\src\main\resources\salida-%1-branch-%2.txt
+git log origin/master%2 --pretty=oneline > C:\resources\salida-%1-branch-%2-data.txt
+For /F "UseBackQ Delims==" %%A In (C:\resources\salida-%1-branch-%2-data.txt) Do Set "lastline=%%A"
+Echo %lastline% > C:\resources\salida-%1-branch-%2.txt
 EXIT

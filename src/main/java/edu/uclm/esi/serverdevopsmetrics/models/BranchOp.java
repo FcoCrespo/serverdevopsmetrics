@@ -26,6 +26,7 @@ public class BranchOp {
 
 	private static final Log LOG = LogFactory.getLog(BranchOp.class);
 	private String dir = "C:/Github/";
+	private String resourcessalida = "C:/resources/salida-";
 	
 
 	public List<String> getBranches(String reponame, String owner) throws IOException, GitAPIException, InterruptedException {
@@ -73,17 +74,15 @@ public class BranchOp {
 		byte[] bytes = reponame.getBytes(StandardCharsets.UTF_8);
 		String reponameEnd =  new String(bytes, StandardCharsets.UTF_8);
 		String completecommand = command + reponameEnd;
-		LOG.info("ejecutamos commando: "+completecommand);
+		LOG.info(completecommand);
 		
-		Runtime.getRuntime().exec(completecommand);
+		Process p = Runtime.getRuntime().exec(completecommand);
 		
-		for(int i=0; i<5; i++) {
-			Thread.sleep(1000);
-			LOG.info("espera: "+i);
-		}
+		LOG.info("Waiting for batch branches ...");
+	    p.waitFor();
 
 		LOG.info("Vamos a imprimir el archivo: C:/resources/salida-" + reponame + ".txt");
-		try (BufferedReader in = new BufferedReader(new FileReader("C:/resources/salida-" + reponame + ".txt"))) {
+		try (BufferedReader in = new BufferedReader(new FileReader(this.resourcessalida + reponame + ".txt"))) {
 			String line;
 
 			while ((line = in.readLine()) != null) {
@@ -93,8 +92,6 @@ public class BranchOp {
 
 				}
 			}
-
-			//Thread.sleep(1000);
 
 			LOG.info("imprimos las branches");
 			LOG.info("size branches: "+branches.size());
@@ -135,108 +132,121 @@ public class BranchOp {
 		LOG.info("imprimos las branches");
 		LOG.info("size branches en firstcommits: "+branches.size());
 		
-		LOG.info("vamos a ejecutar el cmd para la branch principal posible: master");
+		LOG.info("vamos a ejecutar el cmd para la branch principal posible: main");
 		
-		String command = "cmd /c C:\\resources\\firstcommit.bat ";
+		String command = "cmd /c C:\\resources\\firstcommitmainPrincipal.bat ";
 		byte[] bytes = reponame.getBytes(StandardCharsets.UTF_8);
 		String reponEnd = new String(bytes, StandardCharsets.UTF_8);
 		
-		String completecommand = command + reponEnd+ " master";
-		LOG.info("ejecutamos commando: "+completecommand);
+		String reponEndParenthesis = reponEnd;
+		reponEndParenthesis = reponEndParenthesis.replace("(", "^(");
+		reponEndParenthesis = reponEndParenthesis.replace(")", "^)");
 		
-		Runtime.getRuntime().exec(completecommand);
+		String completecommand = command + reponEnd+ " " + " " +reponEndParenthesis;
+		LOG.info(completecommand);
+		
+		Process p = Runtime.getRuntime().exec(completecommand);
 
-		Thread.sleep(500);
+		LOG.info("Waiting for batch file firstcommit ...");
+	    
+		p.waitFor();
 
-		boolean branchEsMaster=true;
+		boolean branchEsMain=true;
+		
+		
 		
 		try (BufferedReader in = new BufferedReader(
-				new FileReader("C:/resources/salida-" + reponame + "-branch-master.txt"));) {
-			String line;
+				new FileReader(this.resourcessalida + reponame + "-branch-main.txt"));) {
+			
+			String line=in.readLine();
+			LOG.info("la linea contiene: "+line);
 
-			if ((line = in.readLine()) == null) {
-				branchEsMaster=false;
+			if (line==null) {
+				LOG.info("La rama principal no es main");
+				branchEsMain=false;
 			}
+			
 		} catch (Exception err) {
 			return Collections.emptyList();
 		}
 		
-		
-		if(branchEsMaster) {
-			for (int i = 0; i < branches.size(); i++) {
-
-				LOG.info("vamos a ejecutar el cmd para la branch: "+branches.get(i));
-				
-				command = "cmd /c C:\\resources\\firstcommit.bat ";
-				bytes = reponame.getBytes(StandardCharsets.UTF_8);
-				reponEnd = new String(bytes, StandardCharsets.UTF_8);
-				bytes = branches.get(i).getBytes(StandardCharsets.UTF_8);
-				String branchEnd = new String(bytes, StandardCharsets.UTF_8);
-				
-				
-				completecommand = command + reponEnd+ " " + branchEnd;
-				LOG.info("ejecutamos commando: "+completecommand);
-				
-				Runtime.getRuntime().exec(completecommand);
-
-				Thread.sleep(500);
-
-				try (BufferedReader in = new BufferedReader(
-						new FileReader("C:/resources/salida-" + reponame + "-branch-" + branches.get(i) + ".txt"));) {
-					String line;
-
-					if ((line = in.readLine()) == null) {
-						commits.add("empty");
-					} else {
-						LOG.info("adding commit:"+line);
-						commits.add(line);
-					}
-				} catch (Exception err) {
-					return Collections.emptyList();
-				}
-			}
+		if(branchEsMain) {
+			
+			commits = execute(branches, reponame, "main");
 		}
 		
 		else {
-			for (int i = 0; i < branches.size(); i++) {
-
-				LOG.info("vamos a ejecutar el cmd para la branch: "+branches.get(i));
-				
-				command = "cmd /c C:\\resources\\firstcommitmain.bat ";
-				bytes = reponame.getBytes(StandardCharsets.UTF_8);
-				reponEnd = new String(bytes, StandardCharsets.UTF_8);
-				bytes = branches.get(i).getBytes(StandardCharsets.UTF_8);
-				String branchEnd = new String(bytes, StandardCharsets.UTF_8);
-				
-				
-				completecommand = command + reponEnd+ " " + branchEnd;
-				LOG.info("ejecutamos commando: "+completecommand);
-				
-				Runtime.getRuntime().exec(completecommand);
-
-				Thread.sleep(500);
-
-				try (BufferedReader in = new BufferedReader(
-						new FileReader("C:/resources/salida-" + reponame + "-branch-" + branches.get(i) + ".txt"));) {
-					String line;
-
-					if ((line = in.readLine()) == null) {
-						commits.add("empty");
-					} else {
-						LOG.info("adding commit:"+line);
-						commits.add(line);
-					}
-				} catch (Exception err) {
-					return Collections.emptyList();
-				}
-			}
+			
+			commits = execute(branches, reponame, "");
+		
 		}
 		
-		
-		
-
 		return commits;
 
+	}
+
+	private List<String> execute(List<String> branches, String reponame, String option) throws IOException, InterruptedException {
+		String command;
+		byte[] bytes;
+		String completecommand;
+		String line;
+		
+		List<String> commits = new ArrayList<String>();
+		for (int i = 0; i < branches.size(); i++) {
+
+			LOG.info("vamos a ejecutar el cmd para la branch: "+branches.get(i));
+			
+			command = "cmd /c C:\\resources\\firstcommit"+option+".bat ";
+			bytes = reponame.getBytes(StandardCharsets.UTF_8);
+			String reponEnd = new String(bytes, StandardCharsets.UTF_8);
+			String branchEnd = "";
+			String branchOrigin = "";
+			if(branches.get(i).equals("master")) {
+				command = "cmd /c C:\\resources\\firstcommitPrincipal.bat ";
+			}
+			else if(branches.get(i).equals("main")) {
+				command = "cmd /c C:\\resources\\firstcommitmainPrincipal.bat ";
+			}
+			else {
+				bytes = branches.get(i).getBytes(StandardCharsets.UTF_8);
+				branchEnd = new String(bytes, StandardCharsets.UTF_8);
+				branchOrigin = "..origin/"+branchEnd;
+			}
+			
+			String reponEndParenthesis = reponEnd;
+			reponEndParenthesis = reponEndParenthesis.replace("(", "^(");
+			reponEndParenthesis = reponEndParenthesis.replace(")", "^)");
+			
+			String branchEndParenthesis = branchEnd;
+			branchEndParenthesis = reponEndParenthesis.replace("(", "^(");
+			branchEndParenthesis = reponEndParenthesis.replace(")", "^)");
+			
+			completecommand = command + reponEnd+ " " + branchEnd+ " " + branchOrigin +" " + reponEndParenthesis +" " + branchEndParenthesis;
+			LOG.info("ejecutamos commando: "+completecommand);
+			
+			Process p = Runtime.getRuntime().exec(completecommand);
+
+			LOG.info("Waiting for batch file firstcommit"+option+" ...");
+		    
+			p.waitFor();
+
+			try (BufferedReader in = new BufferedReader(
+					new FileReader(this.resourcessalida + reponame + "-branch-" + branches.get(i) + ".txt"));) {
+				
+
+				if ((line = in.readLine()) == null) {
+					commits.add("empty");
+				} else {
+					LOG.info("adding commit:"+line);
+					String [] getOid = line.split(" ");
+					commits.add(getOid[0]);
+				}
+				
+			} catch (Exception err) {
+				return Collections.emptyList();
+			}
+		}
+		return commits;
 	}
 
 }
