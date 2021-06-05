@@ -1,8 +1,10 @@
 package edu.uclm.esi.serverdevopsmetrics.models;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -27,6 +29,7 @@ public class BranchOp {
 	private static final Log LOG = LogFactory.getLog(BranchOp.class);
 	private String dir = "C:/Github/";
 	private String resourcessalida = "C:/resources/salida-";
+	private String branchStr =  "-branch-";
 	
 
 	public List<String> getBranches(String reponame, String owner) throws IOException, GitAPIException, InterruptedException {
@@ -189,7 +192,7 @@ public class BranchOp {
 		String command;
 		byte[] bytes;
 		String completecommand;
-		String line;
+		
 		
 		List<String> commits = new ArrayList<String>();
 		for (int i = 0; i < branches.size(); i++) {
@@ -213,15 +216,8 @@ public class BranchOp {
 				branchOrigin = "..origin/"+branchEnd;
 			}
 			
-			String reponEndParenthesis = reponEnd;
-			reponEndParenthesis = reponEndParenthesis.replace("(", "^(");
-			reponEndParenthesis = reponEndParenthesis.replace(")", "^)");
 			
-			String branchEndParenthesis = branchEnd;
-			branchEndParenthesis = reponEndParenthesis.replace("(", "^(");
-			branchEndParenthesis = reponEndParenthesis.replace(")", "^)");
-			
-			completecommand = command + reponEnd+ " " + branchEnd+ " " + branchOrigin +" " + reponEndParenthesis +" " + branchEndParenthesis;
+			completecommand = command + reponEnd+ " " + branchEnd+ " " + branchOrigin;
 			LOG.info("ejecutamos commando: "+completecommand);
 			
 			Process p = Runtime.getRuntime().exec(completecommand);
@@ -229,24 +225,55 @@ public class BranchOp {
 			LOG.info("Waiting for batch file firstcommit"+option+" ...");
 		    
 			p.waitFor();
+			
+			String lastLine = "empty";
+			String sCurrentLine="";
+			
 
 			try (BufferedReader in = new BufferedReader(
-					new FileReader(this.resourcessalida + reponame + "-branch-" + branches.get(i) + ".txt"));) {
-				
+					new FileReader(this.resourcessalida + reponame + this.branchStr + branches.get(i) + ".txt"));) {			  
 
-				if ((line = in.readLine()) == null) {
-					commits.add("empty");
+				    while ((sCurrentLine = in.readLine()) != null) 
+				    {
+				    	
+				        lastLine = sCurrentLine;
+				    }
+				    LOG.info("The last line in repo: "+reponame+" | branch: "+branches.get(i)+" is: "+lastLine);
+				if (lastLine.equals("empty")) {
+					commits.add(lastLine);
 				} else {
-					LOG.info("adding commit:"+line);
-					String [] getOid = line.split(" ");
+					LOG.info("adding commit:"+lastLine);
+					String [] getOid = lastLine.split(" ");
 					commits.add(getOid[0]);
 				}
+			
 				
 			} catch (Exception err) {
 				return Collections.emptyList();
 			}
+			
+			 
+	        
+	        
+	        try(BufferedWriter bw = new BufferedWriter(new FileWriter(this.resourcessalida + reponame + this.branchStr + branches.get(i) + ".txt"))) {
+	        	LOG.info("Contenido: "+lastLine);
+	        	bw.write(lastLine);
+				LOG.info("Reescribiendo "+this.resourcessalida + reponame + this.branchStr + branches.get(i) + ".txt");
+
+		        bw.flush();
+		     }
+		     catch (IOException e) {
+		            e.printStackTrace();
+		            LOG.info("Error writing in: "+this.resourcessalida + reponame + this.branchStr + branches.get(i) + ".txt");
+		     }
+		     finally {
+		    	 LOG.info("Finished");
+		     }    
+			
 		}
 		return commits;
 	}
+
+
 
 }
