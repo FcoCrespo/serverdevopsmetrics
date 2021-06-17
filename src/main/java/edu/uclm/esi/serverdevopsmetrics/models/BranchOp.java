@@ -144,8 +144,8 @@ public class BranchOp {
 		String reponEndParenthesis = reponEnd;
 		reponEndParenthesis = reponEndParenthesis.replace("(", "^(");
 		reponEndParenthesis = reponEndParenthesis.replace(")", "^)");
-		
-		String completecommand = command + reponEnd+ " " + " " +reponEndParenthesis;
+		String branchEnd = "";
+		String completecommand = command + reponEndParenthesis + " " + branchEnd;
 		LOG.info(completecommand);
 		
 		Process p = Runtime.getRuntime().exec(completecommand);
@@ -156,6 +156,10 @@ public class BranchOp {
 
 		boolean branchEsMain=true;
 		
+		for(int i=0; i<5; i++) {
+			LOG.info("espera segundo: "+i);
+			Thread.sleep(1000);
+		}
 		
 		
 		try (BufferedReader in = new BufferedReader(
@@ -202,6 +206,9 @@ public class BranchOp {
 			command = "cmd /c C:\\resources\\firstcommit"+option+".bat ";
 			bytes = reponame.getBytes(StandardCharsets.UTF_8);
 			String reponEnd = new String(bytes, StandardCharsets.UTF_8);
+			String reponEndParenthesis = reponEnd;
+			reponEndParenthesis = reponEndParenthesis.replace("(", "^(");
+			reponEndParenthesis = reponEndParenthesis.replace(")", "^)");
 			String branchEnd = "";
 			String branchOrigin = "";
 			if(branches.get(i).equals("master")) {
@@ -217,7 +224,7 @@ public class BranchOp {
 			}
 			
 			
-			completecommand = command + reponEnd+ " " + branchEnd+ " " + branchOrigin;
+			completecommand = command + reponEndParenthesis+ " " + branchEnd+ " " + branchOrigin;
 			LOG.info("ejecutamos commando: "+completecommand);
 			
 			Process p = Runtime.getRuntime().exec(completecommand);
