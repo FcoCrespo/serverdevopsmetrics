@@ -156,12 +156,6 @@ public class BranchOp {
 
 		boolean branchEsMain=true;
 		
-		for(int i=0; i<5; i++) {
-			LOG.info("espera segundo: "+i);
-			Thread.sleep(1000);
-		}
-		
-		
 		try (BufferedReader in = new BufferedReader(
 				new FileReader(this.resourcessalida + reponame + "-branch-main.txt"));) {
 			
