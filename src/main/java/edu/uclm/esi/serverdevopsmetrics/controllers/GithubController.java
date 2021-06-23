@@ -37,12 +37,13 @@ public class GithubController {
 
 	@GetMapping(value = "/branchesorder")
 	public String getFirstCommitByBranch(@RequestParam("reponame") final String reponame,
-			@RequestParam("owner") final String owner) throws IOException, GitAPIException, InterruptedException {
+			@RequestParam("owner") final String owner,
+			@RequestParam("tokenGithub") final String tokenGithub) throws IOException, GitAPIException, InterruptedException {
 
 		JSONArray array = new JSONArray();
 		JSONObject json;
-		List<String> branches = branchOperations.getBranches(reponame, owner);
-		List<String> commits = branchOperations.getFirstCommit(reponame, branches);
+		List<String> branches = branchOperations.getBranches(reponame, owner, tokenGithub);
+		List<String> commits = branchOperations.getFirstCommit(reponame, owner, branches);
 
 		for (int i = 0; i < branches.size(); i++) {
 			json = new JSONObject();

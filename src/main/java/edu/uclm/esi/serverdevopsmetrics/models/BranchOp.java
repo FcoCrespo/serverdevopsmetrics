@@ -30,53 +30,37 @@ public class BranchOp {
 	private String dir = "C:/Github/";
 	private String resourcessalida = "C:/resources/salida-";
 	private String branchStr =  "-branch-";
+	private String slash = "/";
+	private String guion = "-";
 	
 
-	public List<String> getBranches(String reponame, String owner) throws IOException, GitAPIException, InterruptedException {
-
-		Git git;
-		Repository repo;
-		String githubuser;
-		String githubkey;
+	public List<String> getBranches(String reponame, String owner, String tokenGithub) throws IOException, GitAPIException, InterruptedException {
 
 		List<String> branches = new ArrayList<String>();
-		
-		githubuser = System.getProperty("github.user");
-		githubkey = System.getProperty("github.key");
-		
-		LOG.info("El usuario es: "+githubuser);
-		CredentialsProvider cp = new UsernamePasswordCredentialsProvider(githubuser, githubkey);
 			
-		File f = new File(dir + reponame);
+		File f = new File(dir+ owner +slash+ reponame);
 		if(!f.exists() && !f.isDirectory()) { 
-			Thread th = new Thread(() -> {
-				try {
-					Git.cloneRepository()
-							  .setURI("https://github.com/"+owner+"/"+reponame+".git")
-							  .setDirectory(f)
-							  .call();
-				} catch (GitAPIException e) {
-					LOG.info("error clonating repository to local");
-				}
-		    });
 			
-			th.start();
-			th.join();
+			f = new File(dir + owner);
+			if(!f.exists() && !f.isDirectory()) {
+				f.mkdir();
+			}
 			
+			String command = "cmd /c C:\\resources\\gitclone.bat ";
+
+			String completecommand = command + owner + " " + reponame + " " + tokenGithub;
+			LOG.info(completecommand);
 			
+			Process p = Runtime.getRuntime().exec(completecommand);
+			
+			LOG.info("Waiting for batch branches ...");
+		    p.waitFor();
+		    
 		}
 		
-		repo = new FileRepositoryBuilder().setGitDir(new File(dir + reponame + "/.git")).build();
+		String command = "cmd /c C:\\resources\\gitfetch.bat ";
 
-		git = new Git(repo);
-
-		git.fetch().setCredentialsProvider(cp).setRemote("origin").call();
-
-		String command = "cmd /c C:\\resources\\branches.bat ";
-		
-		byte[] bytes = reponame.getBytes(StandardCharsets.UTF_8);
-		String reponameEnd =  new String(bytes, StandardCharsets.UTF_8);
-		String completecommand = command + reponameEnd;
+		String completecommand = command + owner + slash + reponame + " " + tokenGithub;
 		LOG.info(completecommand);
 		
 		Process p = Runtime.getRuntime().exec(completecommand);
@@ -84,8 +68,33 @@ public class BranchOp {
 		LOG.info("Waiting for batch branches ...");
 	    p.waitFor();
 
-		LOG.info("Vamos a imprimir el archivo: C:/resources/salida-" + reponame + ".txt");
-		try (BufferedReader in = new BufferedReader(new FileReader(this.resourcessalida + reponame + ".txt"))) {
+		command = "cmd /c C:\\resources\\branches.bat ";
+		
+		
+		byte[] bytes = reponame.getBytes(StandardCharsets.UTF_8);
+		String reponEnd = new String(bytes, StandardCharsets.UTF_8);
+		
+		String reponEndParenthesis = reponEnd;
+		reponEndParenthesis = reponEndParenthesis.replace("(", "^(");
+		reponEndParenthesis = reponEndParenthesis.replace(")", "^)");
+		
+		bytes = owner.getBytes(StandardCharsets.UTF_8);
+		String ownerEnd = new String(bytes, StandardCharsets.UTF_8);
+		
+		String ownerEndParenthesis = ownerEnd;
+		ownerEndParenthesis = reponEndParenthesis.replace("(", "^(");
+		ownerEndParenthesis = reponEndParenthesis.replace(")", "^)");
+		
+		completecommand = command + owner + slash + reponEndParenthesis + " " + ownerEndParenthesis+guion+reponEndParenthesis;
+		LOG.info(completecommand);
+		
+		p = Runtime.getRuntime().exec(completecommand);
+		
+		LOG.info("Waiting for batch branches ...");
+	    p.waitFor();
+
+		LOG.info("Vamos a imprimir el archivo: C:/resources/salida-"+ownerEndParenthesis+guion+reponEndParenthesis+ ".txt");
+		try (BufferedReader in = new BufferedReader(new FileReader(this.resourcessalida +ownerEndParenthesis+guion+reponEndParenthesis+".txt"))) {
 			String line;
 
 			while ((line = in.readLine()) != null) {
@@ -99,7 +108,7 @@ public class BranchOp {
 			LOG.info("imprimos las branches");
 			LOG.info("size branches: "+branches.size());
 			for(int i=0; i<branches.size(); i++) {
-				LOG.info("branch "+i+"·: "+branches.get(i));
+				LOG.info("branch "+i+": "+branches.get(i));
 			}
 
 			return branches;
@@ -110,7 +119,7 @@ public class BranchOp {
 
 	}
 
-	public List<String> getFirstCommit(String reponame, List<String> branches)
+	public List<String> getFirstCommit(String reponame, String owner, List<String> branches)
 			throws IOException, GitAPIException, InterruptedException {
 
 		Git git;
@@ -120,7 +129,7 @@ public class BranchOp {
 
 		List<String> commits = new ArrayList<String>();
 
-		repo = new FileRepositoryBuilder().setGitDir(new File(dir + reponame + "/.git")).build();
+		repo = new FileRepositoryBuilder().setGitDir(new File(dir+ owner +slash+ reponame +"/.git")).build();
 
 		git = new Git(repo);
 
@@ -144,8 +153,18 @@ public class BranchOp {
 		String reponEndParenthesis = reponEnd;
 		reponEndParenthesis = reponEndParenthesis.replace("(", "^(");
 		reponEndParenthesis = reponEndParenthesis.replace(")", "^)");
-		String branchEnd = "";
-		String completecommand = command + reponEndParenthesis + " " + branchEnd;
+		
+		LOG.info("reponEndParenthesises es : "+reponEndParenthesis);
+		
+		bytes = owner.getBytes(StandardCharsets.UTF_8);
+		
+		String ownerEnd = new String(bytes, StandardCharsets.UTF_8);
+		
+		String ownerEndParenthesis = ownerEnd;
+		ownerEndParenthesis = ownerEndParenthesis.replace("(", "^(");
+		ownerEndParenthesis = ownerEndParenthesis.replace(")", "^)");
+
+		String completecommand = command + ownerEndParenthesis+slash+reponEndParenthesis+ " " + ownerEndParenthesis+guion+reponEndParenthesis;
 		LOG.info(completecommand);
 		
 		Process p = Runtime.getRuntime().exec(completecommand);
@@ -154,10 +173,12 @@ public class BranchOp {
 	    
 		p.waitFor();
 
-		boolean branchEsMain=true;
 		
+		boolean branchEsMain=true;
+		LOG.info("Comprobando contenido de: "+this.resourcessalida + ownerEndParenthesis+guion+reponEndParenthesis + "-branch-main.txt");
+
 		try (BufferedReader in = new BufferedReader(
-				new FileReader(this.resourcessalida + reponame + "-branch-main.txt"));) {
+				new FileReader(this.resourcessalida + ownerEndParenthesis+guion+reponEndParenthesis + "-branch-main.txt"));) {
 			
 			String line=in.readLine();
 			LOG.info("la linea contiene: "+line);
@@ -173,12 +194,12 @@ public class BranchOp {
 		
 		if(branchEsMain) {
 			
-			commits = execute(branches, reponame, "main");
+			commits = execute(branches, reponame, owner, "main");
 		}
 		
 		else {
 			
-			commits = execute(branches, reponame, "");
+			commits = execute(branches, reponame, owner, "");
 		
 		}
 		
@@ -186,13 +207,15 @@ public class BranchOp {
 
 	}
 
-	private List<String> execute(List<String> branches, String reponame, String option) throws IOException, InterruptedException {
+	private List<String> execute(List<String> branches, String reponame, String owner, String option) throws IOException, InterruptedException {
 		String command;
 		byte[] bytes;
 		String completecommand;
 		
 		
 		List<String> commits = new ArrayList<String>();
+		boolean esPrincipal = false;
+		String commit;
 		for (int i = 0; i < branches.size(); i++) {
 
 			LOG.info("vamos a ejecutar el cmd para la branch: "+branches.get(i));
@@ -203,13 +226,21 @@ public class BranchOp {
 			String reponEndParenthesis = reponEnd;
 			reponEndParenthesis = reponEndParenthesis.replace("(", "^(");
 			reponEndParenthesis = reponEndParenthesis.replace(")", "^)");
+			
+			bytes = owner.getBytes(StandardCharsets.UTF_8);
+			String ownerEnd = new String(bytes, StandardCharsets.UTF_8);
+			String ownerEndParenthesis = ownerEnd;
+			ownerEndParenthesis = ownerEndParenthesis.replace("(", "^(");
+			ownerEndParenthesis = ownerEndParenthesis.replace(")", "^)");
 			String branchEnd = "";
 			String branchOrigin = "";
 			if(branches.get(i).equals("master")) {
 				command = "cmd /c C:\\resources\\firstcommitPrincipal.bat ";
+				esPrincipal = true;
 			}
 			else if(branches.get(i).equals("main")) {
 				command = "cmd /c C:\\resources\\firstcommitmainPrincipal.bat ";
+				esPrincipal = true;
 			}
 			else {
 				bytes = branches.get(i).getBytes(StandardCharsets.UTF_8);
@@ -217,8 +248,12 @@ public class BranchOp {
 				branchOrigin = "..origin/"+branchEnd;
 			}
 			
-			
-			completecommand = command + reponEndParenthesis+ " " + branchEnd+ " " + branchOrigin;
+			if(esPrincipal) {
+				completecommand = command + ownerEndParenthesis+slash+reponEndParenthesis+ " " + ownerEndParenthesis+guion+reponEndParenthesis;
+			}
+			else {
+				completecommand = command + ownerEndParenthesis+slash+reponEndParenthesis+ " " + branchOrigin+ " " + ownerEndParenthesis+guion+reponEndParenthesis + " " +branchEnd;	
+			}
 			LOG.info("ejecutamos commando: "+completecommand);
 			
 			Process p = Runtime.getRuntime().exec(completecommand);
@@ -227,53 +262,65 @@ public class BranchOp {
 		    
 			p.waitFor();
 			
-			String lastLine = "empty";
-			String sCurrentLine="";
 			
-
-			try (BufferedReader in = new BufferedReader(
-					new FileReader(this.resourcessalida + reponame + this.branchStr + branches.get(i) + ".txt"));) {			  
-
-				    while ((sCurrentLine = in.readLine()) != null) 
-				    {
-				    	
-				        lastLine = sCurrentLine;
-				    }
-				    LOG.info("The last line in repo: "+reponame+" | branch: "+branches.get(i)+" is: "+lastLine);
-				if (lastLine.equals("empty")) {
-					commits.add(lastLine);
-				} else {
-					LOG.info("adding commit:"+lastLine);
-					String [] getOid = lastLine.split(" ");
-					commits.add(getOid[0]);
-				}
+			commit = obtenerResultado(reponEndParenthesis,  branches.get(i), ownerEndParenthesis);
 			
-				
-			} catch (Exception err) {
-				return Collections.emptyList();
-			}
+			commits.add(commit);          
 			
-			 
-	        
-	        
-	        try(BufferedWriter bw = new BufferedWriter(new FileWriter(this.resourcessalida + reponame + this.branchStr + branches.get(i) + ".txt"))) {
-	        	LOG.info("Contenido: "+lastLine);
-	        	bw.write(lastLine);
-				LOG.info("Reescribiendo "+this.resourcessalida + reponame + this.branchStr + branches.get(i) + ".txt");
-
-		        bw.flush();
-		     }
-		     catch (IOException e) {
-		            e.printStackTrace();
-		            LOG.info("Error writing in: "+this.resourcessalida + reponame + this.branchStr + branches.get(i) + ".txt");
-		     }
-		     finally {
-		    	 LOG.info("Finished");
-		     }    
-			
+	        esPrincipal = false;
 		}
 		return commits;
 	}
+
+	private String obtenerResultado(String reponame, String branch, String owner) {
+		
+		String lastLine = "empty";
+		String sCurrentLine="";
+		
+		try (BufferedReader in = new BufferedReader(
+				new FileReader(this.resourcessalida + owner+guion+reponame + this.branchStr + branch + ".txt"));) {			  
+
+			    while ((sCurrentLine = in.readLine()) != null) 
+			    {
+			    	
+			        lastLine = sCurrentLine;
+			    }
+			    LOG.info("The last line in repo: "+reponame+" | branch: "+branch+" is: "+lastLine);
+			if (lastLine.equals("empty")) {
+				LOG.info("adding empty commit:"+lastLine);
+				updatefile(reponame, owner, branch, lastLine);
+				return lastLine;
+			} else {
+				updatefile(reponame, owner , branch, lastLine);
+				LOG.info("adding commit:"+lastLine);
+				String [] getOid = lastLine.split(" ");
+				return getOid[0];
+			}
+		
+			
+		} catch (Exception err) {
+			return "error";
+		}
+	}
+
+	private void updatefile(String reponame, String owner, String branch, String lastLine) {
+		try(BufferedWriter bw = new BufferedWriter(new FileWriter(this.resourcessalida + owner+guion+reponame+ this.branchStr + branch + ".txt"))) {
+	    	LOG.info("Contenido: "+lastLine);
+	    	bw.write(lastLine);
+			LOG.info("Reescribiendo "+this.resourcessalida + owner+guion+reponame + this.branchStr + branch + ".txt");
+
+	        bw.flush();
+	     }
+	     catch (IOException e) {
+	            e.printStackTrace();
+	            LOG.info("Error writing in: "+this.resourcessalida + owner+guion+reponame + this.branchStr + branch + ".txt");
+	     }
+	     finally {
+	    	 LOG.info("Finished");
+	     }
+	}
+	
+	  
 
 
 
