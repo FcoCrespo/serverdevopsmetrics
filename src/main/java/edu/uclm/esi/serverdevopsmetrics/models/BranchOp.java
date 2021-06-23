@@ -34,7 +34,7 @@ public class BranchOp {
 	private String guion = "-";
 	
 
-	public List<String> getBranches(String reponame, String owner, String tokenGithub) throws IOException, GitAPIException, InterruptedException {
+	public List<String> getBranches(String reponame, String owner, String tokenGithub) throws IOException, InterruptedException {
 
 		List<String> branches = new ArrayList<String>();
 			
@@ -53,7 +53,7 @@ public class BranchOp {
 			
 			Process p = Runtime.getRuntime().exec(completecommand);
 			
-			LOG.info("Waiting for batch branches ...");
+			LOG.info("Waiting for batch gitclone ...");
 		    p.waitFor();
 		    
 		}
@@ -65,7 +65,7 @@ public class BranchOp {
 		
 		Process p = Runtime.getRuntime().exec(completecommand);
 		
-		LOG.info("Waiting for batch branches ...");
+		LOG.info("Waiting for batch gitfetch ...");
 	    p.waitFor();
 
 		command = "cmd /c C:\\resources\\branches.bat ";
