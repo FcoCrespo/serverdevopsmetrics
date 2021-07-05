@@ -36,7 +36,6 @@ public class BranchOp {
 
 	public List<String> getBranches(String reponame, String owner, String tokenGithub) throws IOException, InterruptedException {
 
-		List<String> branches = new ArrayList<String>();
 			
 		File f = new File(dir+ owner +slash+ reponame);
 		if(!f.exists() && !f.isDirectory()) { 
@@ -82,8 +81,8 @@ public class BranchOp {
 		String ownerEnd = new String(bytes, StandardCharsets.UTF_8);
 		
 		String ownerEndParenthesis = ownerEnd;
-		ownerEndParenthesis = reponEndParenthesis.replace("(", "^(");
-		ownerEndParenthesis = reponEndParenthesis.replace(")", "^)");
+		ownerEndParenthesis = ownerEndParenthesis.replace("(", "^(");
+		ownerEndParenthesis = ownerEndParenthesis.replace(")", "^)");
 		
 		completecommand = command + owner + slash + reponEndParenthesis + " " + ownerEndParenthesis+guion+reponEndParenthesis;
 		LOG.info(completecommand);
@@ -93,6 +92,14 @@ public class BranchOp {
 		LOG.info("Waiting for batch branches ...");
 	    p.waitFor();
 
+	    return getBranches(ownerEndParenthesis, reponEndParenthesis);
+	
+	}
+
+	private List<String> getBranches(String ownerEndParenthesis, String reponEndParenthesis) {
+		
+		List<String> branches = new ArrayList<String>();
+		
 		LOG.info("Vamos a imprimir el archivo: C:/resources/salida-"+ownerEndParenthesis+guion+reponEndParenthesis+ ".txt");
 		try (BufferedReader in = new BufferedReader(new FileReader(this.resourcessalida +ownerEndParenthesis+guion+reponEndParenthesis+".txt"))) {
 			String line;
@@ -116,7 +123,6 @@ public class BranchOp {
 			LOG.info("No existe el archivo");
 			return Collections.emptyList();
 		}
-
 	}
 
 	public List<String> getFirstCommit(String reponame, String owner, List<String> branches)
