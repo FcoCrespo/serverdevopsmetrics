@@ -1,6 +1,5 @@
 cd ..
 cd ..
-cd ..
 cd Github
 chcp 65001
 cd %1

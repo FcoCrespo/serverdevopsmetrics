@@ -6,19 +6,17 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.Scanner;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.eclipse.jgit.transport.CredentialsProvider;
-import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +31,23 @@ public class BranchOp {
 	private String slash = "/";
 	private String guion = "-";
 	
+	private static SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss:SSS");
+	
+	private void logOutput(InputStream inputStream, String prefix) {
+	    new Thread(() -> {
+	        Scanner scanner = new Scanner(inputStream, "UTF-8");
+	        while (scanner.hasNextLine()) {
+	            synchronized (this) {
+	                log(prefix + scanner.nextLine());
+	            }
+	        }
+	        scanner.close();
+	    }).start();
+	}
+
+	private synchronized void log(String message) {
+	    System.out.println(format.format(new Date()) + ": " + message);
+	}
 
 	public List<String> getBranches(String reponame, String owner, String tokenGithub) throws IOException, InterruptedException {
 
@@ -51,9 +66,11 @@ public class BranchOp {
 			LOG.info(completecommand);
 			
 			Process p = Runtime.getRuntime().exec(completecommand);
-			
+			logOutput(p.getInputStream(), "");
+	        logOutput(p.getErrorStream(), "Error: ");
+	        p.waitFor();
 			LOG.info("Waiting for batch gitclone ...");
-		    p.waitFor();
+		   
 		    
 		}
 		
@@ -63,9 +80,11 @@ public class BranchOp {
 		LOG.info(completecommand);
 		
 		Process p = Runtime.getRuntime().exec(completecommand);
-		
+		logOutput(p.getInputStream(), "");
+        logOutput(p.getErrorStream(), "Error: ");
+        p.waitFor();
 		LOG.info("Waiting for batch gitfetch ...");
-	    p.waitFor();
+	    
 
 		command = "cmd /c C:\\resources\\branches.bat ";
 		
@@ -126,26 +145,11 @@ public class BranchOp {
 	}
 
 	public List<String> getFirstCommit(String reponame, String owner, List<String> branches)
-			throws IOException, GitAPIException, InterruptedException {
+			throws IOException, InterruptedException {
 
-		Git git;
-		Repository repo;
-		String githubuser;
-		String githubkey;
+		
 
 		List<String> commits = new ArrayList<String>();
-
-		repo = new FileRepositoryBuilder().setGitDir(new File(dir+ owner +slash+ reponame +"/.git")).build();
-
-		git = new Git(repo);
-
-		githubuser = System.getProperty("github.user");
-		githubkey = System.getProperty("github.key");
-				
-		LOG.info("El usuario para firstcommits es: "+githubuser);
-
-		CredentialsProvider cp = new UsernamePasswordCredentialsProvider(githubuser, githubkey);
-		git.fetch().setCredentialsProvider(cp).setRemote("origin").call();
 
 		LOG.info("imprimos las branches");
 		LOG.info("size branches en firstcommits: "+branches.size());
@@ -176,8 +180,9 @@ public class BranchOp {
 		Process p = Runtime.getRuntime().exec(completecommand);
 
 		LOG.info("Waiting for batch file firstcommit ...");
-	    
-		p.waitFor();
+		logOutput(p.getInputStream(), "");
+        logOutput(p.getErrorStream(), "Error: ");
+        p.waitFor();
 
 		
 		boolean branchEsMain=true;
@@ -266,7 +271,9 @@ public class BranchOp {
 
 			LOG.info("Waiting for batch file firstcommit"+option+" ...");
 		    
-			p.waitFor();
+			logOutput(p.getInputStream(), "");
+	        logOutput(p.getErrorStream(), "Error: ");
+	        p.waitFor();
 			
 			
 			commit = obtenerResultado(reponEndParenthesis,  branches.get(i), ownerEndParenthesis);

@@ -7,7 +7,6 @@ import java.util.Scanner;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +37,7 @@ public class GithubController {
 	@GetMapping(value = "/branchesorder")
 	public String getFirstCommitByBranch(@RequestParam("reponame") final String reponame,
 			@RequestParam("owner") final String owner,
-			@RequestParam("tokenGithub") final String tokenGithub) throws IOException, GitAPIException, InterruptedException {
+			@RequestParam("tokenGithub") final String tokenGithub) throws IOException, InterruptedException {
 
 		JSONArray array = new JSONArray();
 		JSONObject json;
